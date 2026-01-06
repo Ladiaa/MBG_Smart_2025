@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "106799459804",
+    "firebase_url": "https://mbgsmart-30b1c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mbgsmart-30b1c",
+    "storage_bucket": "mbgsmart-30b1c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:106799459804:android:ae53b544f17b89a2f37319",
+        "android_client_info": {
+          "package_name": "com.example.mbgsmart"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqn1szCN2zPV8KOsFD70soKC5NS9EPQnU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
