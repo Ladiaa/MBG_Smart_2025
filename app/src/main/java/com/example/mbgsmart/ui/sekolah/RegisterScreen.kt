@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,12 +23,13 @@ import com.example.mbgsmart.ui.components.AppCard
 import com.example.mbgsmart.ui.theme.AppTextField
 import com.example.mbgsmart.ui.theme.BrandDarkBlue
 import com.example.mbgsmart.ui.viewmodel.AuthViewModel
+import com.google.firebase.auth.FirebaseUser
 
 @Composable
 fun RegisterScreen(
     authViewModel: AuthViewModel = viewModel(),
     onNavigateToLogin: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: (FirebaseUser) -> Unit
 ) {
 
     var email by remember { mutableStateOf("") }
@@ -120,9 +122,9 @@ fun RegisterScreen(
                         authViewModel.registerSekolah(
                             email = email,
                             password = password,
-                            onSuccess = {
+                            onSuccess = { user ->
                                 isLoading = false
-                                onRegisterSuccess()
+                                onRegisterSuccess(user) // 🔥 KIRIM USER
                             },
                             onFailure = {
                                 isLoading = false
@@ -130,6 +132,7 @@ fun RegisterScreen(
                             }
                         )
                     }
+
 
                     TextButton(onClick = onNavigateToLogin) {
                         Text("Sudah punya akun? Masuk")
@@ -139,3 +142,5 @@ fun RegisterScreen(
         }
     }
 }
+
+

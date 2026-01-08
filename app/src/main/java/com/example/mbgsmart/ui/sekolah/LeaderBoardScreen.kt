@@ -66,14 +66,10 @@ fun LeaderboardScreen(
             }
 
             /* ===== LIST LEADERBOARD ===== */
-            LazyColumn(
+            Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
-                itemsIndexed(
-                    items = leaderboardData,
-                    key = { _, item -> item.first }
-                ) { index, item ->
+                leaderboardData.forEachIndexed { index, item ->
                     LeaderboardItemCard(
                         rank = index + 1,
                         schoolName = item.first,
@@ -81,16 +77,11 @@ fun LeaderboardScreen(
                     )
                 }
 
-                /* ===== EMPTY STATE ===== */
                 if (leaderboardData.isEmpty() && !isLoading) {
-                    item {
-                        Text(
-                            text = "Belum ada data leaderboard.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
+                    Text("Belum ada data leaderboard.")
                 }
             }
+
         }
     }
 }

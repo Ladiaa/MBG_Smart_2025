@@ -1,6 +1,7 @@
 package com.example.mbgsmart.ui.admin
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,8 +16,9 @@ import coil.compose.AsyncImage
 import com.example.mbgsmart.data.model.Menu
 import com.example.mbgsmart.ui.components.AdminBaseScreen
 import com.example.mbgsmart.ui.components.AdminBottomNavBar
-import com.example.mbgsmart.ui.components.BaseScreen
+import androidx.compose.foundation.lazy.items
 import com.example.mbgsmart.ui.viewmodel.MenuViewModel
+
 
 @Composable
 fun AdminMenuScreen(
@@ -24,8 +26,6 @@ fun AdminMenuScreen(
     onNavigate: (String) -> Unit,
     viewModel: MenuViewModel = viewModel()
 ) {
-
-    /* ================= STATE ================= */
     val menus = viewModel.menuList.value
     val isLoading = viewModel.isLoading.value
     val errorMessage = viewModel.errorMessage.value
@@ -33,7 +33,6 @@ fun AdminMenuScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedMenu by remember { mutableStateOf<Menu?>(null) }
 
-    /* ================= LISTENER ================= */
     LaunchedEffect(Unit) {
         viewModel.startListeningAllMenus()
     }
@@ -42,7 +41,6 @@ fun AdminMenuScreen(
         onDispose { viewModel.stopListening() }
     }
 
-    /* ================= UI ================= */
     Scaffold(
         bottomBar = {
             AdminBottomNavBar(
@@ -58,30 +56,30 @@ fun AdminMenuScreen(
             modifier = Modifier.padding(padding)
         ) {
 
-            /* ===== LOADING ===== */
             if (isLoading) {
                 CircularProgressIndicator()
                 return@AdminBaseScreen
             }
 
-            /* ===== ERROR ===== */
             errorMessage?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
                 return@AdminBaseScreen
             }
 
-            /* ===== EMPTY ===== */
             if (menus.isEmpty()) {
                 Text("Belum ada menu yang diunggah", color = Color.Gray)
                 return@AdminBaseScreen
             }
 
-            /* ===== LIST MENU (TANPA LAZYCOLUMN) ===== */
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            /* 🔥 FIX UTAMA: LazyColumn */
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                menus.forEach { menu ->
+                items(
+                    items = menus,
+                    key = { it.id }
+                ) { menu ->
                     AdminMenuCard(
                         menu = menu,
                         onDelete = {
@@ -90,11 +88,11 @@ fun AdminMenuScreen(
                         }
                     )
                 }
+
             }
         }
     }
 
-    /* ================= DELETE DIALOG ================= */
     if (showDeleteDialog && selectedMenu != null) {
         AlertDialog(
             onDismissRequest = {
@@ -135,6 +133,7 @@ fun AdminMenuScreen(
         )
     }
 }
+
 
 /* ================================================= */
 /* ================= MENU CARD ===================== */

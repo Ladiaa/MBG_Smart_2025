@@ -27,8 +27,7 @@ import com.google.firebase.auth.FirebaseUser
 fun LoginScreen(
     authViewModel: AuthViewModel = viewModel(),
     onLoginSuccess: (FirebaseUser) -> Unit,
-    onNavigateToRegister: () -> Unit,
-    onNavigateToForgot: () -> Unit
+    onNavigateToRegister: () -> Unit
 ) {
 
     var email by remember { mutableStateOf("") }

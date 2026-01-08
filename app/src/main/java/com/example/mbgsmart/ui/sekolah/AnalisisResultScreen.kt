@@ -2,13 +2,13 @@ package com.example.mbgsmart.ui.sekolah
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,28 +21,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mbgsmart.data.model.Menu
 import com.example.mbgsmart.data.model.asText
 import com.example.mbgsmart.ui.components.BaseScreen
+import com.example.mbgsmart.ui.components.PageTitleCard
 import com.example.mbgsmart.ui.theme.*
 import com.example.mbgsmart.ui.viewmodel.MenuViewModel
 
 @Composable
 fun AnalisisResultScreen(
     menu: Menu,
+    menuViewModel: MenuViewModel,
     onFinish: () -> Unit
 ) {
-
-    val menuViewModel: MenuViewModel = viewModel()
     var isUploading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    /* ================= HITUNG SCORE (AMAN) ================= */
     val score = remember(menu) {
-        var total = 0
-        if (menu.karbo.asText().isNotBlank()) total += 20
-        if (menu.protein.asText().isNotBlank()) total += 20
-        if (menu.sayur.asText().isNotBlank()) total += 20
-        if (menu.buah.asText().isNotBlank()) total += 20
-        if (menu.minuman.asText().isNotBlank()) total += 20
-        total
+        listOf(
+            menu.karbo,
+            menu.protein,
+            menu.sayur,
+            menu.buah,
+            menu.minuman
+        ).count { it.asText().isNotBlank() } * 20
     }
 
     BaseScreen(
@@ -52,16 +51,14 @@ fun AnalisisResultScreen(
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            /* ===== SCORE ===== */
             ScoreCard(
                 score = score,
                 color = if (score >= 80) BrandGreen else BrandRed
             )
 
-            /* ===== DETAIL ===== */
             AnalysisDetailCard(
                 results = listOf(
                     NutrientAnalysis("Karbohidrat", menu.karbo.asText().isNotBlank()),
@@ -72,38 +69,31 @@ fun AnalisisResultScreen(
                 )
             )
 
-            /* ===== FEEDBACK ===== */
-            FeedbackCard(score = score)
+            FeedbackCard(score)
 
-            /* ===== ERROR ===== */
             errorMessage?.let {
                 Text(it, color = MaterialTheme.colorScheme.error)
             }
 
-            /* ===== POSTING MENU ===== */
             Button(
-                enabled = !isUploading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandDarkBlue),
+                enabled = !isUploading,
                 onClick = {
                     isUploading = true
                     menuViewModel.createMenu(menu) { success ->
                         isUploading = false
-                        if (success) {
-                            onFinish()
-                        } else {
-                            errorMessage = "Gagal menyimpan menu."
-                        }
+                        if (success) onFinish()
+                        else errorMessage = "Gagal menyimpan menu"
                     }
                 }
             ) {
                 if (isUploading) {
                     CircularProgressIndicator(
-                        color = Color.White,
                         modifier = Modifier.size(22.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        color = Color.White
                     )
                 } else {
                     Text("Posting Menu")
@@ -113,12 +103,15 @@ fun AnalisisResultScreen(
     }
 }
 
+
+
 /* ================= MODEL ================= */
 
 data class NutrientAnalysis(
     val title: String,
     val available: Boolean
 )
+
 
 /* ================= COMPONENT ================= */
 

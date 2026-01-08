@@ -3,9 +3,7 @@ package com.example.mbgsmart.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,7 +39,6 @@ fun AdminBaseScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            /* 🔥 LOGO (GANTI BOX BULAT) */
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo MBG Smart",
@@ -60,18 +57,17 @@ fun AdminBaseScreen(
                     color = Color.White
                 )
                 Text(
-                    text = "Portal Sekolah",
+                    text = "Portal Admin",
                     fontSize = 13.sp,
                     color = Color.White.copy(alpha = 0.9f)
                 )
             }
         }
 
-        /* ================= BODY (SCROLLABLE) ================= */
+        /* ================= BODY (NON-SCROLL) ================= */
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -98,7 +94,7 @@ fun AdminBaseScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            content()
+            content() // 🔥 LazyColumn ADA DI SCREEN, AMAN
         }
     }
 }

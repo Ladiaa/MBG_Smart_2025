@@ -84,6 +84,17 @@ class ReportRepository {
             .addOnFailureListener { onFailure(it) }
     }
 
+    fun getReportById(
+        reportId: String,
+        onSuccess: (Report?) -> Unit
+    ) {
+        reportRef.document(reportId)
+            .get()
+            .addOnSuccessListener {
+                onSuccess(it.toObject(Report::class.java))
+            }
+    }
+
     /* ================= DELETE ================= */
     fun deleteReport(
         reportId: String,

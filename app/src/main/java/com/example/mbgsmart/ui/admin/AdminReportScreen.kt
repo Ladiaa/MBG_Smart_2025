@@ -2,6 +2,7 @@ package com.example.mbgsmart.ui.admin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -15,9 +16,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mbgsmart.data.model.Report
 import com.example.mbgsmart.ui.components.AdminBaseScreen
 import com.example.mbgsmart.ui.components.AdminBottomNavBar
-import com.example.mbgsmart.ui.components.BaseScreen
 import com.example.mbgsmart.ui.murid.InfoRow
 import com.example.mbgsmart.ui.theme.*
+import androidx.compose.foundation.lazy.items
 import com.example.mbgsmart.ui.viewmodel.ReportViewModel
 
 @Composable
@@ -26,13 +27,10 @@ fun AdminReportScreen(
     onNavigate: (String) -> Unit,
     viewModel: ReportViewModel = viewModel()
 ) {
-
-    /* ================= STATE ================= */
     val reports = viewModel.reportList.value
     var selectedFilter by remember { mutableStateOf("ALL") }
     var selectedReport by remember { mutableStateOf<Report?>(null) }
 
-    /* ================= LISTENER ================= */
     LaunchedEffect(Unit) {
         viewModel.startListeningAllReports()
     }
@@ -41,7 +39,6 @@ fun AdminReportScreen(
         onDispose { viewModel.stopListening() }
     }
 
-    /* ================= FILTER LOGIC ================= */
     val filteredReports = when (selectedFilter) {
         "PENDING" -> reports.filter { it.status == "PENDING" }
         "APPROVED" -> reports.filter { it.status == "APPROVED" }
@@ -49,7 +46,6 @@ fun AdminReportScreen(
         else -> reports
     }
 
-    /* ================= UI ================= */
     Scaffold(
         bottomBar = {
             AdminBottomNavBar(
@@ -65,7 +61,6 @@ fun AdminReportScreen(
             modifier = Modifier.padding(padding)
         ) {
 
-            /* ================= FILTER (RAPI) ================= */
             ReportFilterSection(
                 selected = selectedFilter,
                 onSelect = { selectedFilter = it }
@@ -73,21 +68,20 @@ fun AdminReportScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            /* ================= EMPTY ================= */
             if (filteredReports.isEmpty()) {
-                Text(
-                    text = "Tidak ada laporan",
-                    color = Color.Gray
-                )
+                Text("Tidak ada laporan", color = Color.Gray)
                 return@AdminBaseScreen
             }
 
-            /* ================= LIST ================= */
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            /* 🔥 FIX UTAMA: LazyColumn */
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                filteredReports.forEach { report ->
+                items(
+                    items = filteredReports,
+                    key = { it.id }
+                ) { report ->
                     AdminReportCard(
                         report = report,
                         onClick = { selectedReport = report },
@@ -95,11 +89,11 @@ fun AdminReportScreen(
                         onReject = { viewModel.rejectReport(report.id) }
                     )
                 }
+
             }
         }
     }
 
-    /* ================= DETAIL DIALOG ================= */
     selectedReport?.let { report ->
         AdminReportDetailDialog(
             report = report,

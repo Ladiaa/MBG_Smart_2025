@@ -4,54 +4,77 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.mbgsmart.data.model.Catering
-import com.example.mbgsmart.data.model.Sekolah
-import com.example.mbgsmart.data.repository.AdminRepository
+import com.example.mbgsmart.data.model.SekolahMaster
+import com.example.mbgsmart.data.repository.AdminMasterRepository
+import com.google.firebase.firestore.ListenerRegistration
 
 class AdminMasterViewModel : ViewModel() {
 
-    private val repository = AdminRepository()
+    private val repository = AdminMasterRepository()
 
-    private val _schools = mutableStateOf<List<Sekolah>>(emptyList())
-    val schools: State<List<Sekolah>> = _schools
+    private val _schools = mutableStateOf<List<SekolahMaster>>(emptyList())
+    val schools: State<List<SekolahMaster>> = _schools
 
     private val _caterings = mutableStateOf<List<Catering>>(emptyList())
     val caterings: State<List<Catering>> = _caterings
 
-    init {
-        repository.listenSchools { list ->
-            _schools.value = list
-        }
+    private var schoolListener: ListenerRegistration? = null
+    private var cateringListener: ListenerRegistration? = null
 
-        repository.listenCaterings { list ->
-            _caterings.value = list
+    init {
+        startListeningSchools()
+        startListeningCaterings()
+    }
+
+    /* ================= READ ================= */
+
+    private fun startListeningSchools() {
+        if (schoolListener != null) return
+        schoolListener = repository.listenAllSchools {
+            _schools.value = it
         }
     }
 
-    /* ================= SCHOOL ================= */
+    private fun startListeningCaterings() {
+        if (cateringListener != null) return
+        cateringListener = repository.listenAllCaterings {
+            _caterings.value = it
+        }
+    }
+
+    /* ================= CREATE ================= */
 
     fun addSchool(
-        namaSekolah: String,
-        alamat: String
+        name: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
     ) {
+        if (name.isBlank()) return
+
         repository.addSchool(
-            namaSekolah = namaSekolah,
-            alamat = alamat,
-            onSuccess = {},
-            onFailure = { it.printStackTrace() }
+            SekolahMaster(namaSekolah = name),
+            onSuccess,
+            onFailure
         )
     }
-
-    /* ================= CATERING ================= */
 
     fun addCatering(
         name: String,
-        phone: String
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
     ) {
+        if (name.isBlank()) return
+
         repository.addCatering(
-            name = name,
-            phone = phone,
-            onSuccess = {},
-            onFailure = { it.printStackTrace() }
+            Catering(name = name),
+            onSuccess,
+            onFailure
         )
+    }
+
+    override fun onCleared() {
+        schoolListener?.remove()
+        cateringListener?.remove()
+        super.onCleared()
     }
 }

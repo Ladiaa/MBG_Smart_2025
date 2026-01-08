@@ -22,13 +22,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mbgsmart.data.model.Report
 import com.example.mbgsmart.ui.components.BaseScreenMurid
 import com.example.mbgsmart.ui.components.MuridBottomNavBar
+import com.example.mbgsmart.ui.navigation.Routes
 import com.example.mbgsmart.ui.theme.*
 import com.example.mbgsmart.ui.viewmodel.AuthViewModel
 import com.example.mbgsmart.ui.viewmodel.ReportViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
-/* ================= STATUS ENUM ================= */
+/* ================= FILTER ENUM ================= */
+enum class ReportFilter {
+    ALL, PENDING, APPROVED, REJECTED
+}
+
 enum class ReportStatus(val label: String, val color: Color) {
     PENDING("Menunggu", Color(0xFFFFA000)),
     APPROVED("Diterima", Color(0xFF4CAF50)),
@@ -43,29 +48,34 @@ fun ReportHistoryScreen(
     onNavigate: (String) -> Unit,
     onViewDetail: (Report) -> Unit
 ) {
-
-    /* ================= STATE ================= */
     val currentUser by authViewModel.currentUser.collectAsState()
     val reports by reportViewModel.reportList
 
-    /* ================= LISTENER ================= */
+    var selectedFilter by remember { mutableStateOf(ReportFilter.ALL) }
+
     LaunchedEffect(currentUser) {
-        currentUser?.uid?.let { userId ->
-            reportViewModel.startListeningMyReports(userId)
+        currentUser?.uid?.let {
+            reportViewModel.startListeningMyReports(it)
+        }
+    }
+
+    val filteredReports = remember(reports, selectedFilter) {
+        when (selectedFilter) {
+            ReportFilter.ALL -> reports
+            ReportFilter.PENDING -> reports.filter { it.status == "PENDING" }
+            ReportFilter.APPROVED -> reports.filter { it.status == "APPROVED" }
+            ReportFilter.REJECTED -> reports.filter { it.status == "REJECTED" }
         }
     }
 
     DisposableEffect(Unit) {
-        onDispose {
-            reportViewModel.stopListening()
-        }
+        onDispose { reportViewModel.stopListening() }
     }
 
-    /* ================= UI ================= */
     Scaffold(
         bottomBar = {
             MuridBottomNavBar(
-                currentScreen = "murid_history",
+                currentScreen = Routes.MuridRoutes.HISTORY,
                 onNavigate = onNavigate
             )
         }
@@ -73,36 +83,86 @@ fun ReportHistoryScreen(
 
         BaseScreenMurid(
             title = "Riwayat Laporan",
-            subtitle = "Status laporan menu yang telah dikirim",
-            modifier = Modifier.padding(padding)
+            subtitle = "Status laporan menu yang telah dikirim"
         ) {
 
-            /* ===== EMPTY STATE ===== */
-            if (reports.isEmpty()) {
-                Text(
-                    text = "Anda belum pernah membuat laporan.",
-                    color = Color.Gray,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
 
-                /* ===== LIST REPORT ===== */
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                /* ================= FILTER BAR ================= */
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    items(
-                        items = reports,
-                        key = { it.id }
-                    ) { report ->
-                        ReportItemCard(
-                            report = report,
-                            onClick = { onViewDetail(report) }
+                    FilterButton("Semua", selectedFilter == ReportFilter.ALL) {
+                        selectedFilter = ReportFilter.ALL
+                    }
+                    FilterButton("Pending", selectedFilter == ReportFilter.PENDING) {
+                        selectedFilter = ReportFilter.PENDING
+                    }
+                    FilterButton("Diterima", selectedFilter == ReportFilter.APPROVED) {
+                        selectedFilter = ReportFilter.APPROVED
+                    }
+                    FilterButton("Ditolak", selectedFilter == ReportFilter.REJECTED) {
+                        selectedFilter = ReportFilter.REJECTED
+                    }
+                }
+
+                /* ================= LIST ================= */
+                if (filteredReports.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Tidak ada laporan",
+                            color = Color.Gray
                         )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filteredReports, key = { it.id }) { report ->
+                            ReportItemCard(
+                                report = report,
+                                onClick = { onViewDetail(report) }
+                            )
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+/* ================= FILTER BUTTON ================= */
+@Composable
+fun FilterButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.height(36.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected)
+                BrandDarkBlue
+            else
+                MaterialTheme.colorScheme.surfaceVariant,
+            contentColor = if (selected)
+                Color.White
+            else
+                Color.DarkGray
+        )
+    ) {
+        Text(text, fontSize = 12.sp)
     }
 }
 
@@ -112,7 +172,6 @@ fun ReportItemCard(
     report: Report,
     onClick: () -> Unit
 ) {
-
     val status = when (report.status) {
         "APPROVED" -> ReportStatus.APPROVED
         "REJECTED" -> ReportStatus.REJECTED
@@ -136,7 +195,6 @@ fun ReportItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            /* ===== LEFT CONTENT ===== */
             Column(modifier = Modifier.weight(1f)) {
 
                 Text(
@@ -170,7 +228,6 @@ fun ReportItemCard(
                 )
             }
 
-            /* ===== RIGHT CONTENT ===== */
             Column(horizontalAlignment = Alignment.End) {
                 StatusChip(status)
                 Spacer(modifier = Modifier.height(8.dp))

@@ -16,6 +16,22 @@ class AuthViewModel : ViewModel() {
     private val _currentUser = MutableStateFlow<FirebaseUser?>(auth.currentUser)
     val currentUser = _currentUser.asStateFlow()
 
+    /* ================= TAMBAHAN (INI KUNCI) ================= */
+    private val _currentMurid = MutableStateFlow<Murid?>(null)
+    val currentMurid = _currentMurid.asStateFlow()
+
+    /* ================= LOAD DATA MURID ================= */
+    fun loadCurrentMurid() {
+        val uid = auth.currentUser?.uid ?: return
+
+        db.collection("murid")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                _currentMurid.value = doc.toObject(Murid::class.java)
+            }
+    }
+
     /* ================= REGISTER SEKOLAH ================= */
     fun registerSekolah(
         email: String,
@@ -26,15 +42,20 @@ class AuthViewModel : ViewModel() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnSuccessListener { result ->
                 val user = result.user
-                _currentUser.value = user
-                if (user != null) {
-                    onSuccess(user)
+                if (user == null) {
+                    onFailure(Exception("User tidak valid"))
+                    return@addOnSuccessListener
                 }
+
+                auth.currentUser?.reload()
+                    ?.addOnCompleteListener {
+                        _currentUser.value = auth.currentUser
+                        onSuccess(auth.currentUser!!)
+                    }
             }
-            .addOnFailureListener { exception ->
-                onFailure(exception)
-            }
+            .addOnFailureListener { onFailure(it) }
     }
+
 
     /* ================= REGISTER MURID ================= */
     fun registerMurid(
@@ -62,7 +83,10 @@ class AuthViewModel : ViewModel() {
                 db.collection("murid")
                     .document(user.uid)
                     .set(murid)
-                    .addOnSuccessListener { onSuccess() }
+                    .addOnSuccessListener {
+                        _currentMurid.value = murid
+                        onSuccess()
+                    }
                     .addOnFailureListener { onFailure(it) }
             }
             .addOnFailureListener { onFailure(it) }
@@ -78,16 +102,15 @@ class AuthViewModel : ViewModel() {
         auth.signInWithEmailAndPassword(email, pass)
             .addOnSuccessListener { result ->
                 _currentUser.value = result.user
+                loadCurrentMurid()   // 🔥 WAJIB
                 result.user?.let { onSuccess(it) }
             }
             .addOnFailureListener { onFailure(it) }
     }
 
-
-
-
     fun logout() {
         auth.signOut()
         _currentUser.value = null
+        _currentMurid.value = null
     }
 }

@@ -1,6 +1,8 @@
 package com.example.mbgsmart.ui.admin
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -16,7 +18,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mbgsmart.ui.components.AdminBaseScreen
 import com.example.mbgsmart.ui.components.AdminBottomNavBar
-import com.example.mbgsmart.ui.components.BaseScreen
 import com.example.mbgsmart.ui.theme.*
 import com.example.mbgsmart.ui.viewmodel.AdminDashboardViewModel
 import com.example.mbgsmart.ui.viewmodel.ReportViewModel
@@ -54,63 +55,70 @@ fun AdminDashboardScreen(
             modifier = Modifier.padding(padding)
         ) {
 
-            Column(
+            LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
 
                 /* ===== ROW 1 ===== */
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    DashboardStatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Sekolah",
-                        value = stats.totalSchools.toString(),
-                        icon = Icons.Default.School,
-                        color = BrandDarkBlue
-                    )
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        DashboardStatCard(
+                            modifier = Modifier.weight(1f),
+                            title = "Sekolah",
+                            value = stats.totalSchools.toString(),
+                            icon = Icons.Default.School,
+                            color = BrandDarkBlue
+                        )
 
-                    DashboardStatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Menu",
-                        value = stats.totalMenus.toString(),
-                        icon = Icons.Default.Restaurant,
-                        color = Color(0xFF4CAF50)
-                    )
+                        DashboardStatCard(
+                            modifier = Modifier.weight(1f),
+                            title = "Menu",
+                            value = stats.totalMenus.toString(),
+                            icon = Icons.Default.Restaurant,
+                            color = Color(0xFF4CAF50)
+                        )
+                    }
                 }
 
                 /* ===== ROW 2 ===== */
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    DashboardStatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Laporan",
-                        value = stats.totalReports.toString(),
-                        icon = Icons.Default.Warning,
-                        color = Color(0xFFFFA000)
-                    )
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        DashboardStatCard(
+                            modifier = Modifier.weight(1f),
+                            title = "Laporan",
+                            value = stats.totalReports.toString(),
+                            icon = Icons.Default.Warning,
+                            color = Color(0xFFFFA000)
+                        )
 
-                    DashboardStatCard(
-                        modifier = Modifier.weight(1f),
-                        title = "Catering",
-                        value = stats.totalCaterings.toString(),
-                        icon = Icons.Default.Store,
-                        color = Color(0xFF1E88E5)
-                    )
+                        DashboardStatCard(
+                            modifier = Modifier.weight(1f),
+                            title = "Catering",
+                            value = stats.totalCaterings.toString(),
+                            icon = Icons.Default.Store,
+                            color = Color(0xFF1E88E5)
+                        )
+                    }
                 }
 
                 /* ===== REPORT STAT BY SCHOOL ===== */
-                ReportStatsBySchoolSection(
-                    reportViewModel = reportViewModel
-                )
+                item {
+                    ReportStatsBySchoolSection(
+                        reportViewModel = reportViewModel
+                    )
+                }
             }
         }
     }
 }
+
 
 /* ================= CARD ================= */
 

@@ -20,30 +20,37 @@ import com.example.mbgsmart.ui.components.MuridBottomNavBar
 import com.example.mbgsmart.ui.theme.BrandDarkBlue
 import com.example.mbgsmart.ui.theme.BrandGreen
 import com.example.mbgsmart.ui.theme.BrandRed
+import com.example.mbgsmart.ui.viewmodel.AuthViewModel
 import com.example.mbgsmart.ui.viewmodel.MenuViewModel
 
 @Composable
 fun HomeScreenMurid(
-    schoolName: String,
+    authViewModel: AuthViewModel = viewModel(),
     menuViewModel: MenuViewModel = viewModel(),
     onNavigate: (String) -> Unit,
     onReportMenu: (Menu) -> Unit
 ) {
 
-    /* ================= STATE ================= */
-    val menus = menuViewModel.menuList.value
-    val isLoading = menuViewModel.isLoading.value
-    val errorMessage = menuViewModel.errorMessage.value
+    val menus by menuViewModel.menuList
+    val isLoading by menuViewModel.isLoading
+    val errorMessage by menuViewModel.errorMessage
+    val murid by authViewModel.currentMurid.collectAsState()
 
-    /* ================= LISTENER ================= */
-    DisposableEffect(schoolName) {
-        if (schoolName.isNotBlank()) {
-            menuViewModel.startListeningMenusBySchoolName(schoolName)
+    LaunchedEffect(Unit) {
+        authViewModel.loadCurrentMurid()
+    }
+
+    LaunchedEffect(murid?.schoolName) {
+        murid?.schoolName?.let {
+            menuViewModel.loadMuridSchool(it)
+            menuViewModel.startListeningMenusBySchoolName(it)
         }
+    }
+
+    DisposableEffect(Unit) {
         onDispose { menuViewModel.stopListening() }
     }
 
-    /* ================= UI ================= */
     Scaffold(
         bottomBar = {
             MuridBottomNavBar(
@@ -52,39 +59,30 @@ fun HomeScreenMurid(
             )
         }
     ) { padding ->
+
         BaseScreenMurid(
             title = "Menu Hari Ini",
             subtitle = "Menu dari sekolah kamu",
             modifier = Modifier.padding(padding)
         ) {
 
-            if (isLoading) {
-                CircularProgressIndicator()
-            }
-
-            errorMessage?.let {
-                Text(it, color = MaterialTheme.colorScheme.error)
-            }
-
-            if (!isLoading && menus.isEmpty()) {
-                Text("Belum ada menu", color = Color.Gray)
-            }
-
-            if (menus.isNotEmpty()) {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(menus, key = { it.id }) { menu ->
-                        MenuCardForMurid(
-                            menu = menu,
-                            onReport = { onReportMenu(menu) }
-                        )
-                    }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(menus, key = { it.id }) { menu ->
+                    MenuCardForMurid(
+                        menu = menu,
+                        onReport = { onReportMenu(menu) }
+                    )
                 }
             }
         }
+
     }
 }
+
+
 
 @Composable
 fun MenuCardForMurid(

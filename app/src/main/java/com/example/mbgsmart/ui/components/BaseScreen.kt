@@ -41,7 +41,6 @@ fun BaseScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            /* 🔥 LOGO (GANTI BOX BULAT) */
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo MBG Smart",
@@ -50,7 +49,7 @@ fun BaseScreen(
                     .clip(CircleShape)
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
 
             Column {
                 Text(
@@ -67,12 +66,17 @@ fun BaseScreen(
             }
         }
 
-        /* ================= BODY (SCROLLABLE) ================= */
+        /* ================= BODY (SCROLL SATU-SATUNYA) ================= */
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 96.dp
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -80,14 +84,14 @@ fun BaseScreen(
                 modifier = Modifier.fillMaxWidth(),
                 backgroundColor = BrandDarkBlue
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(Modifier.padding(20.dp)) {
                     Text(
                         text = title,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(Modifier.height(6.dp))
                     Text(
                         text = subtitle,
                         fontSize = 14.sp,
@@ -96,7 +100,7 @@ fun BaseScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(24.dp))
 
             content()
         }

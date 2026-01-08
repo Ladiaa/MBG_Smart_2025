@@ -75,6 +75,14 @@ class ReportViewModel : ViewModel() {
         )
     }
 
+    fun loadReportById(
+        reportId: String,
+        onResult: (Report?) -> Unit
+    ) {
+        repository.getReportById(reportId, onResult)
+    }
+
+
     /* ================= DELETE ================= */
     fun deleteReport(reportId: String) {
         repository.deleteReport(

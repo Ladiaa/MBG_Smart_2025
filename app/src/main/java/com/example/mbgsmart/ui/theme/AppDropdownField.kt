@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.shadow
 
 @Composable
 fun AppDropdownField(
@@ -23,7 +22,6 @@ fun AppDropdownField(
 
     Box(modifier = modifier) {
 
-        /* ===== FIELD (TAMPILAN MIRIP AppTextField) ===== */
         Surface(
             color = Color.White,
             shape = RoundedCornerShape(10.dp),
@@ -31,7 +29,10 @@ fun AppDropdownField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
-                .clickable { expanded = true }
+                .clickable {
+
+                    if (items.isNotEmpty()) expanded = true
+                }
         ) {
             Row(
                 modifier = Modifier
@@ -40,30 +41,32 @@ fun AppDropdownField(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (value.isBlank()) placeholder else value,
-                    color = if (value.isBlank())
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else
-                        MaterialTheme.colorScheme.onSurface
+                    text =
+                        if (value.isNotBlank()) value
+                        else placeholder,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        /* ===== DROPDOWN ===== */
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(item) },
-                    onClick = {
-                        onItemSelected(item)
-                        expanded = false
-                    }
-                )
+        if (items.isNotEmpty()) {
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            onItemSelected(item)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
 }
+
+

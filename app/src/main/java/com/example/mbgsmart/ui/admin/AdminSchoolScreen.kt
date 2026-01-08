@@ -6,100 +6,59 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mbgsmart.ui.components.AdminBaseScreen
-import com.example.mbgsmart.ui.components.AdminBottomNavBar
 import com.example.mbgsmart.ui.viewmodel.AdminMasterViewModel
 
 @Composable
 fun AdminSchoolScreen(
-    currentScreen: String = "admin_school",
-    onNavigate: (String) -> Unit,
-    viewModel: AdminMasterViewModel = viewModel()
+    adminVM: AdminMasterViewModel = viewModel()
 ) {
+    var schoolName by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
+    var successMessage by remember { mutableStateOf("") }
 
-    /* ================= STATE ================= */
-    var name by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Tambah Sekolah", style = MaterialTheme.typography.titleMedium)
 
-    val schools by viewModel.schools
+        OutlinedTextField(
+            value = schoolName,
+            onValueChange = { schoolName = it },
+            label = { Text("Nama Sekolah") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-    /* ================= UI ================= */
-    Scaffold(
-        bottomBar = {
-            AdminBottomNavBar(
-                currentScreen = currentScreen,
-                onNavigate = onNavigate
-            )
+        if (errorMessage.isNotBlank()) {
+            Text(errorMessage, color = MaterialTheme.colorScheme.error)
         }
-    ) { padding ->
 
-        AdminBaseScreen(
-            title = "Data Sekolah",
-            subtitle = "Kelola sekolah penerima MBG",
-            modifier = Modifier.padding(padding)
-        ) {
+        if (successMessage.isNotBlank()) {
+            Text(successMessage, color = MaterialTheme.colorScheme.primary)
+        }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+        Button(
+            onClick = {
+                errorMessage = ""
+                successMessage = ""
 
-                /* ================= FORM TAMBAH ================= */
-                Text(
-                    text = "Tambah Sekolah Penerima MBG",
-                    style = MaterialTheme.typography.titleLarge
-                )
-
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Nama Sekolah") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = address,
-                    onValueChange = { address = it },
-                    label = { Text("Alamat Sekolah") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Button(
-                    onClick = {
-                        if (name.isNotBlank() && address.isNotBlank()) {
-                            viewModel.addSchool(name, address)
-                            name = ""
-                            address = ""
-                        }
+                adminVM.addSchool(
+                    name = schoolName,
+                    onSuccess = {
+                        successMessage = "Sekolah berhasil ditambahkan"
+                        schoolName = ""
                     },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Simpan Sekolah")
-                }
-
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-                /* ================= LIST SEKOLAH ================= */
-                Text(
-                    text = "Daftar Sekolah",
-                    style = MaterialTheme.typography.titleMedium
-                )
-
-                if (schools.isEmpty()) {
-                    Text(
-                        text = "Belum ada data sekolah",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        schools.forEach { school ->
-                            Text("• ${school.namaSekolah}")
-                        }
+                    onFailure = { e ->
+                        errorMessage = e.message ?: "Gagal menambah sekolah"
                     }
-                }
-            }
+                )
+            },
+            enabled = schoolName.isNotBlank(),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Simpan Sekolah")
         }
     }
 }

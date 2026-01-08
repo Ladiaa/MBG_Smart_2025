@@ -1,10 +1,12 @@
 package com.example.mbgsmart.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mbgsmart.data.model.Sekolah
 import com.example.mbgsmart.data.repository.SekolahRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 class SekolahViewModel : ViewModel() {
 
@@ -13,41 +15,30 @@ class SekolahViewModel : ViewModel() {
     private val _sekolah = MutableStateFlow<Sekolah?>(null)
     val sekolah: StateFlow<Sekolah?> = _sekolah
 
+    fun loadSekolah(
+        userId: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val data = repository.getSekolahByUserId(userId)
+            _sekolah.value = data
+            onResult(data != null)
+        }
+    }
+
     fun saveSekolah(
         sekolah: Sekolah,
         onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
+        onError: (String) -> Unit
     ) {
-        repository.saveSekolah(
-            sekolah = sekolah,
-            onSuccess = onSuccess,
-            onFailure = onFailure
-        )
-    }
-
-    fun getSekolah(uid: String) {
-        repository.getSekolah(
-            uid = uid,
-            onSuccess = { _sekolah.value = it },
-            onFailure = { it.printStackTrace() }
-        )
-    }
-
-    /* ================= AMBIL DATA SEKOLAH ================= */
-    fun loadSekolah(uid: String) {
-        repository.getSekolah(
-            uid = uid,
-            onSuccess = { data ->
-                _sekolah.value = data
-            },
-            onFailure = { error ->
-                error.printStackTrace()
+        viewModelScope.launch {
+            try {
+                repository.saveSekolah(sekolah)
+                _sekolah.value = sekolah
+                onSuccess()
+            } catch (e: Exception) {
+                onError(e.message ?: "Gagal menyimpan data sekolah")
             }
-        )
-    }
-
-    /* ================= CEK APAKAH IDENTITAS SUDAH ADA ================= */
-    fun checkIdentity(uid: String, onResult: (Boolean) -> Unit) {
-        repository.checkIdentity(uid, onResult)
+        }
     }
 }

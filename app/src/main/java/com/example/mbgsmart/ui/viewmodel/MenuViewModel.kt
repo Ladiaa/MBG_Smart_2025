@@ -11,9 +11,7 @@ class MenuViewModel : ViewModel() {
 
     private val repository = MenuRepository()
 
-    /* =====================================================
-     * STATE MENU
-     * ===================================================== */
+    /* ================= STATE ================= */
     private val _menuList = mutableStateOf<List<Menu>>(emptyList())
     val menuList: State<List<Menu>> = _menuList
 
@@ -26,90 +24,109 @@ class MenuViewModel : ViewModel() {
     private val _errorMessage = mutableStateOf<String?>(null)
     val errorMessage: State<String?> = _errorMessage
 
+    private val _schoolName = mutableStateOf("")
+    val schoolName: State<String> = _schoolName
+
     private var menuListener: ListenerRegistration? = null
 
-    /* =====================================================
-     * CREATE (UPLOAD MENU SEKOLAH)
-     * ===================================================== */
-    fun createMenu(
-        menu: Menu,
-        onResult: (Boolean) -> Unit
-    ) {
-        _isLoading.value = true
-        _errorMessage.value = null
+    /* ================= MENU ANALYSIS ================= */
+    private val _menuForAnalysis = mutableStateOf<Menu?>(null)
+    val menuForAnalysis: State<Menu?> = _menuForAnalysis
 
+    fun setMenuForAnalysis(menu: Menu) {
+        _menuForAnalysis.value = menu
+    }
+
+    fun clearMenuForAnalysis() {
+        _menuForAnalysis.value = null
+    }
+
+    /* ================= CREATE ================= */
+    fun createMenu(menu: Menu, onResult: (Boolean) -> Unit) {
+        _isLoading.value = true
         repository.createMenu(menu) { success ->
             _isLoading.value = false
-            if (!success) {
-                _errorMessage.value = "Gagal menyimpan menu"
-            }
+            if (!success) _errorMessage.value = "Gagal menyimpan menu"
             onResult(success)
         }
     }
 
-    /* =====================================================
-     * READ – REALTIME (HISTORY SEKOLAH)
-     * ===================================================== */
-    fun startListeningMenusBySchool(
-        schoolId: String
-    ) {
-        if (menuListener != null) return
+    /* ================= READ ================= */
+    fun startListeningMenusBySchoolName(name: String) {
+        if (name.isBlank()) return
+        stopListening()
 
-        menuListener = repository.listenMenusBySchool(schoolId) { menus ->
-            _menuList.value = menus
+        _isLoading.value = true
+        menuListener = repository.listenMenusBySchoolName(name) {
+            _menuList.value = it
+            _isLoading.value = false
         }
     }
 
-    /* =====================================================
-     * READ – REALTIME (MENU UNTUK MURID – FILTER SEKOLAH)
-     * ===================================================== */
-    fun startListeningMenusBySchoolName(
-        schoolName: String
-    ) {
-        if (menuListener != null) return
+    fun startListeningMenusBySchool(schoolId: String) {
+        if (schoolId.isBlank()) return
+        stopListening()
 
-        menuListener = repository.listenMenusBySchoolName(schoolName) { menus ->
-            _menuList.value = menus
+        _isLoading.value = true
+        menuListener = repository.listenMenusBySchool(schoolId) {
+            _menuList.value = it
+            _isLoading.value = false
+            _errorMessage.value = null
         }
     }
 
-    /* =====================================================
-     * READ – REALTIME (SEMUA MENU – ADMIN / MURID)
-     * ===================================================== */
+
+
+
     fun startListeningAllMenus() {
-        if (menuListener != null) return
-
-        menuListener = repository.listenAllMenus { menus ->
-            _menuList.value = menus
+        stopListening()
+        menuListener = repository.listenAllMenus {
+            _menuList.value = it
         }
     }
 
-    /* =====================================================
-     * STOP LISTENER (WAJIB DIPANGGIL)
-     * ===================================================== */
     fun stopListening() {
         menuListener?.remove()
         menuListener = null
     }
 
-    /* =====================================================
-     * UPDATE MENU (EDIT)
-     * ===================================================== */
-    fun updateMenu(
-        menu: Menu,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        repository.updateMenu(
-            menu = menu,
-            onSuccess = onSuccess,
-            onFailure = onFailure
+    /* ================= LEADERBOARD ================= */
+    fun loadLeaderboard() {
+        _isLoading.value = true
+        repository.getLeaderboard(
+            onResult = {
+                _leaderboard.value = it
+                _isLoading.value = false
+            },
+            onFailure = {
+                _errorMessage.value = it.message
+                _isLoading.value = false
+            }
         )
     }
 
-    /* =====================================================
-     * DELETE MENU
-     * ===================================================== */
+    /* ================= MURID ================= */
+    fun loadMuridSchool(schoolName: String) {
+        if (schoolName.isBlank()) return
+        _schoolName.value = schoolName
+    }
+
+    /* ================= GENERAL LOAD (REALTIME) ================= */
+    fun loadMenus() {
+        // Kalau sudah ada listener & data, jangan buat ulang
+        if (menuListener != null && _menuList.value.isNotEmpty()) return
+
+        stopListening()
+        _isLoading.value = true
+
+        menuListener = repository.listenAllMenus { menus ->
+            _menuList.value = menus
+            _isLoading.value = false
+        }
+    }
+
+
+    /* ================= DELETE ================= */
     fun deleteMenu(
         menuId: String,
         onSuccess: () -> Unit,
@@ -120,35 +137,6 @@ class MenuViewModel : ViewModel() {
             onSuccess = onSuccess,
             onFailure = onFailure
         )
-    }
-
-    /* =====================================================
-     * LEADERBOARD (JUMLAH MENU PER SEKOLAH)
-     * ===================================================== */
-    fun loadLeaderboard() {
-        _isLoading.value = true
-        _errorMessage.value = null
-
-        repository.getLeaderboard(
-            onResult = { result ->
-                _leaderboard.value = result
-                _isLoading.value = false
-            },
-            onFailure = { e ->
-                _errorMessage.value = e.message
-                _isLoading.value = false
-            }
-        )
-    }
-
-    /* =====================================================
-     * CLEAR STATE (OPTIONAL)
-     * ===================================================== */
-    fun clearState() {
-        _menuList.value = emptyList()
-        _leaderboard.value = emptyList()
-        _errorMessage.value = null
-        _isLoading.value = false
     }
 
     override fun onCleared() {

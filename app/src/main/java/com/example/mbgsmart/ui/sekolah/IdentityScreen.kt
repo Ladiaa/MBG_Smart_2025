@@ -4,14 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mbgsmart.data.model.Sekolah
 import com.example.mbgsmart.ui.components.*
-import com.example.mbgsmart.ui.theme.AppTextField
 import com.example.mbgsmart.ui.theme.AppDropdownField
+import com.example.mbgsmart.ui.theme.AppTextField
 import com.example.mbgsmart.ui.viewmodel.AdminMasterViewModel
+import com.example.mbgsmart.ui.viewmodel.AuthViewModel
 import com.example.mbgsmart.ui.viewmodel.SekolahViewModel
 import com.google.firebase.auth.FirebaseAuth
 
@@ -22,17 +24,49 @@ fun IdentityScreen(
     onSaveSuccess: () -> Unit,
     onNavigate: (String) -> Unit
 ) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
 
+    /* ================= AUTH GUARD ================= */
+    if (currentUser == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val uid = currentUser.uid
+    val sekolah by sekolahVM.sekolah.collectAsState()
+
+    /* 🔥 FLAG AGAR TIDAK DOUBLE LOAD / NAVIGATE */
+    var hasChecked by remember { mutableStateOf(false) }
+
+    /* ================= LOAD SEKOLAH ================= */
+    LaunchedEffect(uid) {
+        if (!hasChecked) {
+            hasChecked = true
+            sekolahVM.loadSekolah(
+                userId = uid,
+                onResult = { hasData ->
+                    if (hasData) {
+                        onSaveSuccess() // ✅ AUTO SKIP KE UPLOAD
+                    }
+                }
+            )
+        }
+    }
+
+    /* ================= FORM STATE ================= */
     var selectedSchoolName by remember { mutableStateOf("") }
     var selectedSchoolId by remember { mutableStateOf("") }
-
     var namaPJ by remember { mutableStateOf("") }
     var jabatanPJ by remember { mutableStateOf("") }
     var hpPJ by remember { mutableStateOf("") }
     var selectedCatering by remember { mutableStateOf("") }
-
-    var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf(false) }
 
     val schoolList by adminVM.schools
     val cateringList by adminVM.caterings
@@ -40,17 +74,8 @@ fun IdentityScreen(
     val schoolNames = schoolList.map { it.namaSekolah }
     val cateringNames = cateringList.map { it.name }
 
-    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                currentScreen = "sekolah_identity",
-                onNavigate = onNavigate
-            )
-        }
-    ) { padding ->
-
+    /* ================= UI ================= */
+    Scaffold { padding ->
         LazyColumn(
             modifier = Modifier
                 .padding(padding)
@@ -81,17 +106,9 @@ fun IdentityScreen(
                 )
             }
 
-            item {
-                AppTextField(namaPJ, { namaPJ = it }, "Nama Penanggung Jawab")
-            }
-
-            item {
-                AppTextField(jabatanPJ, { jabatanPJ = it }, "Jabatan")
-            }
-
-            item {
-                AppTextField(hpPJ, { hpPJ = it }, "No HP")
-            }
+            item { AppTextField(namaPJ, { namaPJ = it }, "Nama Penanggung Jawab") }
+            item { AppTextField(jabatanPJ, { jabatanPJ = it }, "Jabatan") }
+            item { AppTextField(hpPJ, { hpPJ = it }, "No HP") }
 
             item {
                 AppDropdownField(
@@ -104,42 +121,41 @@ fun IdentityScreen(
 
             if (errorMessage.isNotBlank()) {
                 item {
-                    Text(errorMessage, color = MaterialTheme.colorScheme.error)
+                    Text(
+                        errorMessage,
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
 
             item {
                 AppButton(
-                    text = if (isLoading) "Menyimpan..." else "Simpan Identitas",
-                    enabled =
-                        !isLoading &&
-                                uid.isNotBlank() &&
-                                selectedSchoolId.isNotBlank() &&
-                                selectedCatering.isNotBlank() &&
-                                namaPJ.isNotBlank(),
+                    text = if (saving) "Menyimpan..." else "Simpan & Lanjut",
+                    enabled = !saving &&
+                            selectedSchoolId.isNotBlank() &&
+                            selectedCatering.isNotBlank() &&
+                            namaPJ.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    isLoading = true
-
-                    val sekolah = Sekolah(
-                        id = selectedSchoolId,
-                        uid = uid,
-                        namaSekolah = selectedSchoolName,
-                        namaPJ = namaPJ,
-                        jabatanPJ = jabatanPJ,
-                        hpPJ = hpPJ,
-                        catering = selectedCatering
-                    )
+                    saving = true
 
                     sekolahVM.saveSekolah(
-                        sekolah,
+                        sekolah = Sekolah(
+                            id = selectedSchoolId,
+                            uid = uid,
+                            namaSekolah = selectedSchoolName,
+                            namaPJ = namaPJ,
+                            jabatanPJ = jabatanPJ,
+                            hpPJ = hpPJ,
+                            catering = selectedCatering
+                        ),
                         onSuccess = {
-                            isLoading = false
+                            saving = false
                             onSaveSuccess()
                         },
-                        onFailure = {
-                            isLoading = false
-                            errorMessage = it.message ?: "Gagal menyimpan data"
+                        onError = {
+                            saving = false
+                            errorMessage = it
                         }
                     )
                 }
@@ -147,5 +163,3 @@ fun IdentityScreen(
         }
     }
 }
-
-

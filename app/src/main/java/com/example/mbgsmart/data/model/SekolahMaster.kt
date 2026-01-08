@@ -1,7 +1,8 @@
 package com.example.mbgsmart.data.model
 
-data class Catering(
+
+data class SekolahMaster(
     val id: String = "",
-    val name: String = ""
+    val namaSekolah: String = ""
 )
 

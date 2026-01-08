@@ -37,11 +37,10 @@ fun RegisterMurid(
     val schoolList by adminVM.schools
     val schoolNames = schoolList.map { it.namaSekolah }
 
-    val isFormValid =
-        name.isNotBlank() &&
-                email.isNotBlank() &&
-                password.isNotBlank() &&
-                selectedSchoolId.isNotBlank()
+    val isFormValid = name.isNotBlank() &&
+            email.isNotBlank() &&
+            password.isNotBlank() &&
+            selectedSchoolId.isNotBlank()
 
     Column(
         modifier = Modifier
@@ -122,11 +121,11 @@ fun RegisterMurid(
                     name = name,
                     email = email,
                     password = password,
-                    schoolId = selectedSchoolId,
+                    schoolId = selectedSchoolId, 
                     schoolName = selectedSchoolName,
                     onSuccess = {
                         isLoading = false
-                        onRegisterSuccess(selectedSchoolName)
+                        onRegisterSuccess(selectedSchoolName) // PERBAIKAN: Mengembalikan NAMA
                     },
                     onFailure = {
                         isLoading = false
@@ -143,4 +142,3 @@ fun RegisterMurid(
         }
     }
 }
-

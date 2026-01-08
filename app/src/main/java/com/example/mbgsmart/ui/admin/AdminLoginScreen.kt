@@ -18,7 +18,7 @@ import com.example.mbgsmart.R
 import com.example.mbgsmart.ui.theme.*
 
 @Composable
-fun LoginScreenAdmin(
+fun LoginAdminScreen(
     onLoginSuccess: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }

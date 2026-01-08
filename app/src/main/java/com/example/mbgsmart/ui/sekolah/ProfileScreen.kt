@@ -15,7 +15,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,9 +35,13 @@ fun ProfileScreen(
     val currentUser by authViewModel.currentUser.collectAsState()
     val sekolah by sekolahViewModel.sekolah.collectAsState()
 
+    /* ✅ FIX DI SINI */
     LaunchedEffect(currentUser) {
         currentUser?.uid?.let { uid ->
-            sekolahViewModel.getSekolah(uid)
+            sekolahViewModel.loadSekolah(
+                userId = uid,
+                onResult = { /* tidak perlu apa-apa */ }
+            )
         }
     }
 
@@ -64,28 +67,65 @@ fun ProfileScreen(
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Box(
-                        modifier = Modifier.size(80.dp).clip(CircleShape).background(SecondaryBlue.copy(alpha = 0.1f)),
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(SecondaryBlue.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.School, contentDescription = "School", modifier = Modifier.size(40.dp), tint = SecondaryBlue)
+                        Icon(
+                            Icons.Default.School,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = SecondaryBlue
+                        )
                     }
+
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(sekolah?.namaSekolah ?: "Memuat...", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text("NPSN: ${sekolah?.npsn ?: "..."} • ${sekolah?.statusSekolah ?: "..."}", fontSize = 13.sp, color = Color.Gray)
+
+                    Text(
+                        sekolah?.namaSekolah ?: "Memuat...",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        "NPSN: ${sekolah?.npsn ?: "-"} • ${sekolah?.statusSekolah ?: "-"}",
+                        fontSize = 13.sp,
+                        color = Color.Gray
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Menu Items
-            ProfileMenuItem(icon = Icons.Default.Edit, title = "Ubah Identitas Sekolah", onClick = { onNavigate("sekolah_identity") })
-            ProfileMenuItem(icon = Icons.Default.Settings, title = "Pengaturan Akun", onClick = { })
-            ProfileMenuItem(icon = Icons.Default.HelpOutline, title = "Pusat Bantuan", onClick = { })
-            ProfileMenuItem(icon = Icons.Default.Logout, title = "Keluar", isDanger = true, onClick = onLogout)
+            ProfileMenuItem(
+                icon = Icons.Default.Edit,
+                title = "Ubah Identitas Sekolah",
+                onClick = { onNavigate("sekolah_identity") }
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Default.Settings,
+                title = "Pengaturan Akun",
+                onClick = { }
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Default.HelpOutline,
+                title = "Pusat Bantuan",
+                onClick = { }
+            )
+
+            ProfileMenuItem(
+                icon = Icons.Default.Logout,
+                title = "Keluar",
+                isDanger = true,
+                onClick = onLogout
+            )
         }
     }
 }
@@ -98,7 +138,10 @@ fun ProfileMenuItem(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
     ) {
@@ -106,20 +149,24 @@ fun ProfileMenuItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = if (isDanger) Color.Red else PrimaryBlue)
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (isDanger) Color.Red else PrimaryBlue
+            )
             Spacer(modifier = Modifier.width(16.dp))
-            Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (isDanger) Color.Red else Color.Black)
+            Text(
+                title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = if (isDanger) Color.Red else Color.Black
+            )
             Spacer(modifier = Modifier.weight(1f))
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color.Gray)
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color.Gray
+            )
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun ProfileScreenPreview() {
-    MBGSmartTheme {
-        ProfileScreen(onNavigate = {}, onLogout = {})
     }
 }

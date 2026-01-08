@@ -1,6 +1,8 @@
 package com.example.mbgsmart.ui.murid
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,18 +14,16 @@ import com.example.mbgsmart.data.model.Report
 import com.example.mbgsmart.ui.components.BaseScreenMurid
 import com.example.mbgsmart.ui.theme.*
 
-
 @Composable
 fun ReportDetailScreen(
     report: Report,
     onBack: () -> Unit
 ) {
 
-    /* ================= STATUS COLOR ================= */
     val statusColor = when (report.status) {
         "APPROVED" -> BrandGreen
         "REJECTED" -> BrandRed
-        else -> Color(0xFFFFA000) // Menunggu
+        else -> Color(0xFFFFA000)
     }
 
     BaseScreenMurid(
@@ -32,11 +32,12 @@ fun ReportDetailScreen(
     ) {
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()), // ✅ AMAN
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            /* ===== HEADER ===== */
             Text(
                 text = report.menuName,
                 fontWeight = FontWeight.Bold,
@@ -51,15 +52,12 @@ fun ReportDetailScreen(
 
             Divider()
 
-            /* ===== INFORMASI ===== */
             InfoRow("Tanggal", formatTimestamp(report.createdAt))
             InfoRow("Status", report.status, statusColor)
-            InfoRow("Menu", report.menuSummary.ifBlank { "-" })
             InfoRow("Alasan", report.reason)
 
             Divider()
 
-            /* ===== DESKRIPSI ===== */
             Text(
                 text = "Deskripsi",
                 fontWeight = FontWeight.Bold,
@@ -74,7 +72,6 @@ fun ReportDetailScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            /* ===== ACTION ===== */
             Button(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
@@ -85,6 +82,8 @@ fun ReportDetailScreen(
         }
     }
 }
+
+
 
 /* ================= INFO ROW ================= */
 @Composable

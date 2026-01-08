@@ -2,97 +2,73 @@ package com.example.mbgsmart.ui.sekolah
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.mbgsmart.data.model.Menu
 import com.example.mbgsmart.data.model.asText
 import com.example.mbgsmart.ui.components.*
 import com.example.mbgsmart.ui.viewmodel.MenuViewModel
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mbgsmart.ui.viewmodel.SekolahViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun HistoryScreen(
+    menuViewModel: MenuViewModel,
+    sekolahViewModel: SekolahViewModel = viewModel(),
     onNavigate: (String) -> Unit,
     onEditMenu: (Menu) -> Unit
 ) {
+    val sekolah by sekolahViewModel.sekolah.collectAsState()
+    val menuList by menuViewModel.menuList
+    val isLoading by menuViewModel.isLoading
+    val errorMessage by menuViewModel.errorMessage
 
-    /* ================= VIEWMODEL ================= */
-    val menuViewModel: MenuViewModel = viewModel()
-
-    /* ================= STATE ================= */
-    val menuList = menuViewModel.menuList.value
-    val isLoading = menuViewModel.isLoading.value
-    val errorMessage = menuViewModel.errorMessage.value
-
-    /* ================= LISTENER ================= */
-    LaunchedEffect(Unit) {
-        menuViewModel.startListeningAllMenus()
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { menuViewModel.stopListening() }
-    }
-
-    /* ================= UI ================= */
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(
-                currentScreen = "sekolah_history",
-                onNavigate = onNavigate
-            )
+    LaunchedEffect(sekolah?.id) {
+        sekolah?.id?.let {
+            menuViewModel.startListeningMenusBySchool(it)
         }
-    ) { padding ->
+    }
 
-        LazyColumn(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    BaseScreen(
+        title = "Riwayat Menu",
+        subtitle = "Daftar menu yang telah diunggah"
+    ) {
 
-            item { AppHeader() }
-
-            item {
-                PageTitleCard(
-                    title = "Riwayat Menu",
-                    subtitle = "Daftar menu yang telah diunggah"
-                )
+        when {
+            isLoading -> {
+                CircularProgressIndicator()
             }
 
-            if (isLoading) {
-                item { CircularProgressIndicator() }
+            errorMessage != null -> {
+                Text(errorMessage!!, color = MaterialTheme.colorScheme.error)
             }
 
-            errorMessage?.let {
-                item {
-                    Text(it, color = MaterialTheme.colorScheme.error)
-                }
+            menuList.isEmpty() -> {
+                Text("Belum ada menu yang diunggah.")
             }
 
-            items(menuList, key = { it.id }) { menu ->
-                MenuHistoryCard(
-                    menu = menu,
-                    onEdit = { onEditMenu(menu) },
-                    onDelete = {
-                        menuViewModel.deleteMenu(
-                            menuId = menu.id,
-                            onSuccess = {},
-                            onFailure = {}
+            else -> {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    menuList.forEach { menu ->
+                        MenuHistoryCard(
+                            menu = menu,
+                            onEdit = { onEditMenu(menu) },
+                            onDelete = {
+                                menuViewModel.deleteMenu(menu.id, {}, {})
+                            }
                         )
                     }
-                )
-            }
-
-            if (menuList.isEmpty() && !isLoading) {
-                item {
-                    Text("Belum ada menu yang diunggah.")
                 }
             }
         }

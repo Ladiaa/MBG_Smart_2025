@@ -1,14 +1,14 @@
 package com.example.mbgsmart.ui.murid
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,60 +19,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.mbgsmart.data.model.Murid
-import com.example.mbgsmart.data.repository.MuridRepository
 import com.example.mbgsmart.ui.components.BaseScreenMurid
 import com.example.mbgsmart.ui.components.MuridBottomNavBar
-import com.example.mbgsmart.ui.sekolah.ProfileMenuItem
-import com.example.mbgsmart.ui.theme.*
+import com.example.mbgsmart.ui.theme.PrimaryBlue
 import com.example.mbgsmart.ui.viewmodel.AuthViewModel
 
 @Composable
-fun ProfileMuridScreen(
+fun ProfileScreenMurid(
     authViewModel: AuthViewModel = viewModel(),
-    currentScreen: String = "murid_profile",
-    onNavigate: (String) -> Unit,
-    onLogoutSuccess: () -> Unit
+    onLogout: () -> Unit,
+    onNavigate: (String) -> Unit
 ) {
-    val muridRepo = remember { MuridRepository() }
-    val firebaseUser by authViewModel.currentUser.collectAsState()
-
-    var murid by remember { mutableStateOf<Murid?>(null) }
-
-    /* ===== LOAD DATA MURID ===== */
-    LaunchedEffect(firebaseUser?.uid) {
-        firebaseUser?.uid?.let { uid ->
-            muridRepo.getMurid(
-                uid = uid,
-                onResult = { murid = it },
-                onNotFound = {}
-            )
-        }
-    }
+    val user by authViewModel.currentUser.collectAsState()
 
     Scaffold(
         bottomBar = {
             MuridBottomNavBar(
-                currentScreen = currentScreen,
+                currentScreen = "murid_profile",
                 onNavigate = onNavigate
             )
         }
     ) { padding ->
 
         BaseScreenMurid(
-            title = "Profil Murid",
-            subtitle = "Informasi akun pengguna",
+            title = "Profil Saya",
+            subtitle = "Informasi akun murid",
             modifier = Modifier.padding(padding)
         ) {
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()), // ✅ FIX SCROLL
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                /* ===== AVATAR ===== */
                 Box(
                     modifier = Modifier
                         .size(96.dp)
@@ -88,103 +69,49 @@ fun ProfileMuridScreen(
                     )
                 }
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = murid?.name ?: "-",
-                    fontSize = 18.sp,
+                    text = user?.email ?: "-",
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
 
-                Text(
-                    text = "Murid",
-                    fontSize = 13.sp,
-                    color = Color.Gray
-                )
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(Modifier.height(24.dp))
-
-                /* ===== INFO ===== */
                 Card(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        ProfileInfoRow("Nama", murid?.name ?: "-")
-                        ProfileInfoRow("Sekolah", murid?.schoolName ?: "-")
-                        ProfileInfoRow("Email", murid?.email ?: "-")
+                        ProfileInfoRow("Email", user?.email ?: "-")
+                        ProfileInfoRow("Role", "Murid")
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                ProfileMenuItem(
-                    icon = Icons.Default.Edit,
-                    title = "Edit Profil",
-                    onClick = { onNavigate("murid_edit_profile") }
-                )
-
-                ProfileMenuItem(
-                    icon = Icons.Default.Lock,
-                    title = "Ubah Password",
-                    onClick = { onNavigate("murid_change_password") }
-                )
-
-                ProfileMenuItem(
-                    icon = Icons.Default.Logout,
-                    title = "Keluar",
-                    isDanger = true,
+                Button(
                     onClick = {
                         authViewModel.logout()
-                        onLogoutSuccess()
-                    }
-                )
-
-                Spacer(Modifier.height(40.dp))
-
-                @Composable
-                fun ProfileInfoRow(
-                    label: String,
-                    value: String
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = label,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = value,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    Icon(Icons.Default.Logout, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Keluar")
                 }
-
             }
         }
     }
 }
 
 @Composable
-fun ProfileInfoRow(
-    label: String,
-    value: String
-) {
-    Column(
-        modifier = Modifier.padding(vertical = 6.dp)
-    ) {
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = Color.Gray
-        )
-        Text(
-            text = value,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
+fun ProfileInfoRow(label: String, value: String) {
+    Column(modifier = Modifier.padding(vertical = 6.dp)) {
+        Text(text = label, fontSize = 12.sp, color = Color.Gray)
+        Text(text = value, fontSize = 14.sp, fontWeight = FontWeight.Medium)
     }
 }
